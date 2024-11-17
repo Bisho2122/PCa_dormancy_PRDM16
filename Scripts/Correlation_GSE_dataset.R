@@ -9,6 +9,12 @@ library(fplot)
 all_DE_res = readRDS("../Data/all_DE_res.rds")
 
 source("All_functions.R")
+# Create plots dir --------------------------------------------------------
+if (!dir.exists(file.path(getwd(), "Plots"))){
+  dir.create(file.path(getwd(), "Plots"))
+}
+main_path = file.path(getwd(), "Plots")
+
 
 # Calculate correlation with NED  ------------------------------------------------------
 raw_non_ratio = read.csv("../Data/gene_sample_norm_expr_GSE48995.csv")
