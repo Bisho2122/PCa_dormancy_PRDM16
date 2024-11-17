@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # PCa Dormancy PRDM16
 
 Authors: Bishoy Wadie
