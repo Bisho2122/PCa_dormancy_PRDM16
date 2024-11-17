@@ -1,4 +1,5 @@
-library(tidyverse)
+library(tidyr)
+library(dplyr)
 library(DESeq2)
 library(ggpubr)
 library(ggrepel)
@@ -13,17 +14,15 @@ library(RColorBrewer)
 library(ReactomePA)
 library(plyr)
 
-library(httr)
-library(jsonlite)
-
-library(decoupleR)
-library(OmnipathR)
-
 source("All_functions.R")
-
-#TODO change local path for plots
-main_path = "/path/to/local_plots"
 setFplot_page(page = "us")
+
+
+# Create plots dir --------------------------------------------------------
+if (!dir.exists(file.path(getwd(), "Plots"))){
+  dir.create(file.path(getwd(), "Plots"))
+}
+main_path = file.path(getwd(), "Plots")
 
 # Load data ---------------------------------------------------------------
 metadata = readxl::read_xlsx("../Data/Sample_metadata.xlsx")

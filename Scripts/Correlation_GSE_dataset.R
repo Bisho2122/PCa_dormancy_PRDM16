@@ -1,5 +1,4 @@
 library(tidyverse)
-library(limma)
 library(GEOquery)
 library(DESeq2)
 library(ggpubr)

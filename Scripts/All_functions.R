@@ -308,11 +308,6 @@ subset_normalized_data = function(rlog_obj,metadata,genes_of_interest,
 
 curated_pc_calc_corr = function(dataset, gene, cor_method = "spearman") {
   name <- deparse(substitute(dataset))
-
-  # data_subset <- as.data.frame(t(dataset[gene, ]))
-  # data_subset$sample <- rownames(data_subset)
-  # data_subset[, 1] <- as.numeric(data_subset[, 1])
-
   dataset <- as.data.frame(t(dataset))
 
 
@@ -333,89 +328,3 @@ curated_pc_calc_corr = function(dataset, gene, cor_method = "spearman") {
   colnames(cor_matrix) <- c("gene", name)
   return(cor_matrix)
 }
-
-ensembl_API_id = function(ens_id, req_type = "archive"){
-  server <- "https://rest.ensembl.org"
-  ext <- paste0("/", req_type, "/id/", ens_id, "?")
-
-  r <- httr::GET(paste(server, ext, sep = ""), content_type("application/json"))
-
-
-  if(req_type == "archive"){
-    ordered_colnames = c("id","version","is_current", "release", "assembly",
-                         "type", "latest")
-  }
-  if(req_type == "lookup"){
-    ordered_colnames = c("id","version","Parent","start", "end","length","biotype",
-                         "is_canonical")
-  }
-
-  if(r$status_code == 200){
-    res = fromJSON(toJSON(content(r)))
-
-    if(str_detect(ens_id, "ENSG")){
-      transc_id = sub("[.].*", "", res$canonical_transcript)
-      return(ensembl_API_id(ens_id = transc_id,
-                            req_type = "lookup"))
-    }
-
-    res_comps = unlist(res)
-    res_df = matrix(res_comps, ncol=length(res_comps))
-    colnames(res_df) = names(res_comps)
-    return(res_df[,ordered_colnames])
-  }
-  else{
-    return(NULL)
-  }
-
-  # use this if you get a simple nested list back, otherwise inspect its structure
-  # head(data.frame(t(sapply(content(r),c))))
-
-}
-
-remove_redund_probes_GSE = function(gene_info, gene_sym, canonic_info = NULL){
-  GOI = gene_info[gene_info$GENE_SYMBOL == gene_sym,]
-  if(nrow(GOI) == 0){
-    stop("Gene not found in info")
-  }
-  else if (nrow(GOI) == 1){
-    return(GOI)
-  }
-  else{
-    if(all(is.na(GOI$ENSEMBL_ID)) || sum(as.integer(GOI$is_current), na.rm = T) == 0){
-      # chr_info = GOI %>%
-      #   dplyr::select(ID, CHROMOSOMAL_LOCATION) %>%
-      #   tidyr::separate(CHROMOSOMAL_LOCATION, into = c("chr", "coord"), sep = ":") %>%
-      #   tidyr::separate(coord, into = c("start", "end"), sep = "-")
-      # chr_info$length = abs(chr_info$end - chr_info$start)
-      # sel_probe = chr_info$ID[which.max(chr_info$length)]
-      # GOI = GOI[GOI$ID == sel_probe,]
-      return(GOI)
-    }
-    else{
-      if (sum(as.integer(GOI$is_current), na.rm = T) == 1){
-        GOI = GOI[GOI$is_current == "1",]
-      }
-      else{
-        if (sum(as.integer(GOI$is_canonical), na.rm = T) == 1){
-          GOI = GOI[GOI$is_canonical == "1",]
-        }
-        else{
-          GOI = GOI[GOI$is_current == "1",] %>% na.omit()
-          if (nrow(GOI) > 1 & !is.null(canonic_info)){
-            if (unique(GOI$Parent) %in% names(canonic_info)){
-              GOI$Parent_canonic_len = canonic_info[[unique(GOI$Parent)]][,"length"] %>%
-                as.integer()
-              GOI$len_diff = abs(as.integer(GOI$length) - GOI$Parent_canonic_len)
-              GOI = GOI[which.min(abs(GOI$len_diff)),] %>%
-                dplyr::select(-Parent_canonic_len, -len_diff)
-            }
-          }
-        }
-      }
-      GOI = GOI[!is.na(GOI$ID),]
-      return(GOI)
-    }
-  }
-}
-
