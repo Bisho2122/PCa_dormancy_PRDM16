@@ -31,7 +31,8 @@ metadata$Condition = str_replace_all(metadata$Condition,
                                        "ctrl" = "Active"))
 all_DE_res = readRDS("../Data/all_DE_res.rds")
 
-sel_enrichment = readxl::read_xlsx("../Data/Selected_enrichment.xlsx", sheet = 2)
+sel_enrichment = readxl::read_xlsx("../Data/Selected_enrichment.xlsx",
+                                   sheet = 2, skip = 2, col_names = F)
 # Main analysis -----------------------------------------------------------
 cell_lines = c("RM1", "22RV1", "LAPC4")
 all_DE_res = list()
@@ -157,7 +158,7 @@ human_volcano = EnhancedVolcano(all_DE_res$`22RV1`$DE_obj,
 
 export_graph_start(file.path(main_path, "Fig_S2B.pdf"), pt = 10,
                    sideways = T)
-print(p)
+print(human_volcano)
 export_graph_end()
 
 # Prepare data for enrichment ---------------------------------------------
@@ -215,7 +216,7 @@ combined_reactome = ck_reactome_mouse
 combined_reactome@compareClusterResult = rbind.data.frame(combined_reactome@compareClusterResult,
                                                           ck_reactome_22rv1@compareClusterResult)
 combined_reactome@geneClusters = c(combined_reactome@geneClusters,
-                                   ck_reactome_22rv1@geneClusters,)
+                                   ck_reactome_22rv1@geneClusters)
 
 combined_reactome@compareClusterResult = combined_reactome@compareClusterResult %>%
   tidyr::separate(Cluster, c("Group", "direction"),
@@ -260,6 +261,7 @@ final_enrich_res@compareClusterResult$Cluster = str_replace_all(final_enrich_res
                                                    c("22RV1_up" = "22Rv1_up",
                                                      "22RV1_down" = "22Rv1_down"))
 
+colnames(sel_enrichment) = colnames(final_enrich_res@compareClusterResult)
 final_enrich_res@compareClusterResult = final_enrich_res@compareClusterResult[final_enrich_res@compareClusterResult$Description %in% sel_enrichment$Description,]
 
 S2C = dot_plot_custom(final_enrich_res, showCategory = 30,
@@ -282,8 +284,6 @@ mycol = brewer.pal(4, "Pastel2")
 p = ggvenn(venn_list,stroke_size = 0.5, set_name_size = 8,
            fill_color = mycol, stroke_color = NA, show_percentage = F,
            fill_alpha = 0.5, text_size = 10)
-  # ggtitle(paste0("FDR ", i*100, " % ")) +
-  # theme(title = element_text(size = 12, hjust = 0))
 
 export_graph_start(file.path(main_path, "Fig_2C.pdf"), pt = 8,
                    sideways = T)
@@ -392,7 +392,7 @@ p = ComplexHeatmap::pheatmap(wide_mat, cluster_rows = F, cluster_cols = F, show_
              annotation_names_row = F,
              heatmap_legend_param = list(title = "Scaled Expression"))
 
-export_graph_start(file.path(main_path, "Fig_S2D"), pt = 10,
+export_graph_start(file.path(main_path, "Fig_S2D.pdf"), pt = 10,
                    sideways = T)
 print(p)
 export_graph_end()

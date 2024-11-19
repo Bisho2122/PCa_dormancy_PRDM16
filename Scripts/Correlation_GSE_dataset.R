@@ -114,7 +114,7 @@ pos_venn = ggvenn(pos_corr,stroke_size = 0.5, set_name_size = 8,
                   fill_color = mycol, stroke_color = NA, show_percentage = F,
                   fill_alpha = 0.5, text_size = 10)
 
-export_graph_start(file.path(main_path, "S5A_1"), pt = 8,
+export_graph_start(file.path(main_path, "S5A_1.pdf"), pt = 8,
                    sideways = T)
 print(pos_venn)
 export_graph_end()
@@ -123,7 +123,7 @@ neg_venn = ggvenn(neg_corr,stroke_size = 0.5, set_name_size = 8,
                   fill_color = mycol, stroke_color = NA, show_percentage = F,
                   fill_alpha = 0.5, text_size = 10)
 
-export_graph_start(file.path(main_path, "S5A_2"), pt = 8,
+export_graph_start(file.path(main_path, "S5A_2.pdf"), pt = 8,
                    sideways = T)
 print(neg_venn)
 export_graph_end()
