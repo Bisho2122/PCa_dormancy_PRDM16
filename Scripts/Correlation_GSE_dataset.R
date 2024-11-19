@@ -1,6 +1,4 @@
-library(tidyr)
-library(dplyr)
-library(stringr)
+library(tidyverse)
 library(GEOquery)
 library(DESeq2)
 library(ggpubr)

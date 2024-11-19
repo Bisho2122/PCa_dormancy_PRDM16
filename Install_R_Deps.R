@@ -1,5 +1,6 @@
 # Create a vector of required packages
 required_packages <- c(
+  "tidyverse",
   "DESeq2",
   "ggpubr",
   "ggrepel",
@@ -13,10 +14,7 @@ required_packages <- c(
   "RColorBrewer",
   "ReactomePA",
   "plyr",
-  "GEOquery",
-  "dplyr",
-  "tidyr",
-  "stringr"
+  "GEOquery"
 )
 
 # Install any packages that are not currently installed
