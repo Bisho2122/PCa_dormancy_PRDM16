@@ -15,7 +15,8 @@ required_packages <- c(
   "plyr",
   "GEOquery",
   "dplyr",
-  "tidyr"
+  "tidyr",
+  "stringr"
 )
 
 # Install any packages that are not currently installed

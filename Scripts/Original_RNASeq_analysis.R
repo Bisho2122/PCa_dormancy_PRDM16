@@ -1,5 +1,6 @@
 library(tidyr)
 library(dplyr)
+library(stringr)
 library(DESeq2)
 library(ggpubr)
 library(ggrepel)
