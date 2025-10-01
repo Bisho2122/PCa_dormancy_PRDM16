@@ -328,3 +328,136 @@ curated_pc_calc_corr = function(dataset, gene, cor_method = "spearman") {
   colnames(cor_matrix) <- c("gene", name)
   return(cor_matrix)
 }
+
+
+Run_TF_inf = function(DE_obj, regulon_bg){
+  rlog_data = assay(DE_obj$rlog)
+  design_mat = colData(DE_obj$rlog) %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(var = "sample") %>%
+    dplyr::select(sample, Condition)
+
+  reawak_sample_names = design_mat$sample[design_mat$Condition == "Reawakened"]
+
+  rlog_data = rlog_data[,-which(colnames(rlog_data) %in% reawak_sample_names)]
+
+  deg <- DE_obj$DE_df %>%
+    dplyr::select(row, log2FoldChange, stat, padj) %>%
+    dplyr::filter(!is.na(stat)) %>%
+    tibble::column_to_rownames(var = "row") %>%
+    as.matrix()
+  colnames(deg) = c("logFC", "t", "P.Value")
+
+  sample_acts <- decoupleR::run_ulm(mat=rlog_data, net=regulon_bg,
+                                    .source='source', .target='target',
+                                    .mor='mor', minsize = 5)
+
+  contrast_acts <- decoupleR::run_ulm(mat=deg[, 't', drop=FALSE], net=regulon_bg,
+                                      .source='source', .target='target',
+                                      .mor='mor', minsize = 5)
+
+  return(list("ulm_rlog" = sample_acts,
+              "ulm_contrast" = contrast_acts))
+
+}
+
+
+plot_TF_inf_contrasts = function(TF_inf_res,top_n_TF = 60,
+                                 n_common_cell = 2,remove_LAPC4 = F, sel_genes = NULL){
+
+  all_contrast = list()
+  for (c in names(TF_inf_res)){
+    contrast_acts = TF_inf_res[[c]][["ulm_contrast"]] %>%
+      dplyr::filter(p_value < 0.05)
+
+    n_tfs = length(unique(contrast_acts$source))
+
+    f_contrast_acts <- contrast_acts %>%
+      dplyr::mutate(rnk = NA)
+    msk <- f_contrast_acts$score > 0
+    f_contrast_acts[msk, 'rnk'] <- rank(-f_contrast_acts[msk, 'score'])
+    f_contrast_acts[!msk, 'rnk'] <- rank(-abs(f_contrast_acts[!msk, 'score']))
+    tfs <- f_contrast_acts %>%
+      dplyr::arrange(rnk) %>%
+      head(n_tfs) %>%
+      dplyr::pull(source)
+    f_contrast_acts <- f_contrast_acts %>%
+      dplyr::filter(source %in% tfs)
+    f_contrast_acts$cell_line = c
+    all_contrast[[c]] = f_contrast_acts
+  }
+  all_contrast = all_contrast %>% dplyr::bind_rows()
+  all_contrast$source = toupper(all_contrast$source)
+
+  common_TFs = all_contrast %>%
+    dplyr::select(cell_line, source) %>%
+    dplyr::distinct() %>%
+    dplyr::group_by(source) %>%
+    dplyr::summarise(n=n())
+  common_TFs = common_TFs$source[common_TFs$n >= n_common_cell] %>% unique()
+
+  all_contrast = all_contrast[all_contrast$source %in% common_TFs,]
+  all_contrast$cell_line = stringt::str_replace_all(all_contrast$cell_line,
+                                                    c("22RV1" = "22Rv1"))
+
+  wide_mat <- all_contrast %>%
+    tidyr::pivot_wider(id_cols = 'source', names_from = 'cell_line',
+                       values_from = 'score') %>%
+    tibble::column_to_rownames('source') %>%
+    as.matrix()
+
+  if (n_common_cell == 2 & remove_LAPC4){
+    wide_mat = wide_mat[,-which(colnames(wide_mat) %in% "LAPC4")]
+  }
+
+  palette_length = 100
+  my_color = colorRampPalette(c("Darkblue", "white","red"))(palette_length)
+
+  # wide_mat[is.na(wide_mat)] = 0
+
+  x = apply(wide_mat, 1, function(a){sum(sign(a) == -1)})
+  y = apply(wide_mat, 1, function(a){sum(sign(a) == 1)})
+
+  all_same_sign = c(x[which(x >= n_common_cell)],
+                    y[which(y >= n_common_cell)]) %>% names()
+
+  wide_mat = wide_mat[all_same_sign,]
+
+  if(n_common_cell != 3){
+    max_rank_TFs = all_contrast %>%
+      dplyr::filter(source %in% rownames(wide_mat)) %>%
+      dplyr::filter(rnk <= top_n_TF) %>%
+      dplyr::pull(source) %>%
+      unique()
+    wide_mat = wide_mat[max_rank_TFs,]
+  }
+
+
+  my_breaks <- c(seq(round(min(wide_mat)), 0, length.out=ceiling(palette_length/2) + 1),
+                 seq(0.25, round(max(wide_mat)), length.out=floor(palette_length/2)))
+
+  if(!is.null(sel_genes)){
+    wide_mat = wide_mat[sel_genes,]
+  }
+
+  # Plot
+  if (n_common_cell != 3){
+    pheatmap::pheatmap(wide_mat, border_color = NA,
+                       color= my_color,
+                       cluster_rows = T, cluster_cols = F,
+                       display_numbers = F,
+                       number_color = "black",fontsize = 12,
+                       na_col = "black",breaks = my_breaks)
+  }
+  else{
+    pheatmap::pheatmap(wide_mat, border_color = "black",
+                       color= colorRampPalette(brewer.pal(n = 3, name =
+                                                            "Reds"))(5),
+                       cluster_rows = F, cluster_cols = F,
+                       display_numbers = round(wide_mat,2),
+                       number_color = "black",fontsize = 18,
+                       na_col = "white")
+  }
+
+
+}
