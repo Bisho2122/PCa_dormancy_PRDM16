@@ -2,7 +2,7 @@
 
 Authors: Bishoy Wadie [bishoy.wadie\@embl.de](mailto:bishoy.wadie@embl.de) and Mostafa Nasr [mostafanasr\@usf.edu](mailto:mostafanasr@usf.edu)
 
-This repository contains the necessary data and scripts to reproduce the plots and analyses from the paper "PRDM16 induces prostate cancer cell dormancy and prevents bone metastatic outgrowth" for reproducibility purposes.
+This repository contains the necessary data and scripts to reproduce the plots and analyses from the paper "PRDM16 regulates prostate cancer cell dormancy and prevents bone metastatic outgrowth" for reproducibility purposes.
 
 ## Contents
 
