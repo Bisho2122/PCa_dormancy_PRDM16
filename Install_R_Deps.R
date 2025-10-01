@@ -37,7 +37,8 @@ bioc_packages <- c(
   "org.Mm.eg.db",
   "clusterProfiler",
   "ReactomePA",
-  "GEOquery"
+  "GEOquery",
+  "decoupleR"
 )
 
 for (pkg in bioc_packages) {
